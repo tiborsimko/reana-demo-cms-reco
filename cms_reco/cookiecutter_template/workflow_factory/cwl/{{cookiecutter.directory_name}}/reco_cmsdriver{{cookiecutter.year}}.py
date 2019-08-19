@@ -22,14 +22,14 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(-1)
+    input = cms.untracked.int32({{cookiecutter.nevents}})
 )
 
 # Input source
 process.source = cms.Source("PoolSource",
     secondaryFileNames = cms.untracked.vstring(),
     fileNames = cms.untracked.vstring(
-        'root://eospublic.cern.ch//eos/opendata/cms/Run2011A/DoubleElectron/RAW/v1/000/160/433/C046161E-0D4E-E011-BCBA-0030487CD906.root'
+        {{cookiecutter.dataset_file}}
                                       )
 )
 
@@ -59,8 +59,8 @@ process.AODoutput = cms.OutputModule("PoolOutputModule",
 # Additional output definition
 
 #Additional statements
-process.GlobalTag.connect = cms.string('sqlite_file:/cvmfs/cms-opendata-conddb.cern.ch/FT_53_LV5_AN1_RUNA.db')
-process.GlobalTag.globaltag = 'FT_53_LV5_AN1::All'
+process.GlobalTag.connect = cms.string('sqlite_file:/cvmfs/cms-opendata-conddb.cern.ch/{{cookiecutter.global_tag}}_RUNA.db')
+process.GlobalTag.globaltag = '{{cookiecutter.global_tag}}::All'
 
 # Path and EndPath definitions
 process.raw2digi_step = cms.Path(process.RawToDigi)

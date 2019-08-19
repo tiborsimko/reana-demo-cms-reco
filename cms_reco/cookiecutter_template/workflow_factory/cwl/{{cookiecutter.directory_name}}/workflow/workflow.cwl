@@ -34,4 +34,4 @@ steps:
     run: step1.cwl
     in:
       reco_tool: reco_tool
-    out: [result.root, step1.log]
+    out: [DoubleMu.root, step1.log]

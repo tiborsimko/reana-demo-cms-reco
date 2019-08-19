@@ -1,13 +1,15 @@
-====================================
- REANA example - CMS reconstruction
-====================================
+=================
+ REANA-CMS reco
+=================
+
+.. image:: https://img.shields.io/pypi/pyversions/reana-demo-cms-reco.svg
+   :target: https://pypi.org/pypi/reana-demo-cms-reco
 
 .. image:: https://badges.gitter.im/Join%20Chat.svg
    :target: https://gitter.im/reanahub/reana?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
 
-.. image:: https://img.shields.io/github/license/reanahub/reana-demo-cms-reco.svg
-   :target: https://raw.githubusercontent.com/reanahub/reana-demo-alice-cms-reco/master/LICENSE
-
+.. image:: https://img.shields.io/github/license/reanahub/reana.svg
+   :target: https://github.com/reanahub/reana-demo-cms-reco/blob/master/LICENSE
 
 About
 ======
@@ -96,45 +98,35 @@ specific environment are then:
       $ ls -l /cvmfs/
       $ cmsRun reco_cmsdriver2011.py
 
+=======
+-----
+>>>>>>> f1ffcd3... First draft of the workflow factory
 
-5. Output results
------------------
+This demo represents a "workflow factory" script that will produce REANA
+workflows for given parameters for the CMS RAW to AOD reconstruction procedure.
 
-The demo will create ROOT files containing data in the AOD format specified
-above.
+Following successful tests (see other branches), we know that REANA is able to
+run CMS reconstruction for a variety of RAW samples (e.g. dataset SingleMu) and
+data-taking years (e.g. 2011).
 
-Running the example on REANA cloud
-==================================
+Features
+---------
 
-When finished, the
+The main use case is the command:
 
 .. code-block:: console
 
-    $ # create new virtual environment
-    $ virtualenv ~/.virtualenvs/myreana
-    $ source ~/.virtualenvs/myreana/bin/activate
-    $ # install REANA client
-    $ pip install reana-client
-    $ # connect to some REANA cloud instance
-    $ export REANA_SERVER_URL=https://reana.cern.ch/
-    $ export REANA_ACCESS_TOKEN=XXXXXXX
-    $ # create new workflow
-    $ reana-client create -f reana.yaml
-    $ export REANA_WORKON=workflow
-    $ # start computational workflow
-    $ reana-client start
-    $ # ... should be finished in several hours, depending on the data size
-    $ reana-client status
-    $ # list workspace files
-    $ reana-client ls
-    $ # download output results
-    $ reana-client download
+    $ cms-reco --create-workflow --dataset SingleElectron --year 2011
+        Created `cms-reco-SingleElectron-2011` directory.
+    $ cd cms-reco-SingleElectron-2011
+    $ reana-client run
 
-Contributors
-============
+which will generate (using default parameters) the workflow to run the example
+of the 2011 branch. This generates a workflow in a given output directory that
+is ready to run REANA, with all  necessary input file information and
+configuration files.
 
-The list of contributors to this REANA example in alphabetical order:
 
-- `Daniel Prelipcean <https://orcid.org/0000-0002-4855-194X>`_
-- `Kati Lassila-Perini <https://orcid.org/0000-0002-5502-1795>`_
-- `Tibor Simko <https://orcid.org/0000-0001-7202-5803>`_
+Questions
+---------
+- project structure
