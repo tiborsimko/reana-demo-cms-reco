@@ -7,43 +7,72 @@
 # REANA is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
+"""Reana workflow factory cli."""
+
+
 import os
-import sys
 
 import click
-
+from cookiecutter.exceptions import OutputDirExistsException
 from cookiecutter.main import cookiecutter
 
-from .utils import validate_workflow_engine, get_config
+from .utils import (get_config_from_json, load_config_from_cod, run_analysis,
+                    run_pipeline, valid_run_years, workflow_engines)
 
 
 @click.group()
 def cms_reco():
-    """Info"""
+    """Info."""
     pass
 
+
+@click.option('--config_file',
+              default='cms_reco/cms-reco-config.json',
+              help='recid for the data set to be reconstructed')
+@click.option('--recid',
+              help='recid for the data set to be reconstructed')
+@cms_reco.command()
+def load_config(recid, config_file):
+    """Download config file using the cern open data client."""
+    load_config_from_cod(recid, config_file)
+    print("Downloaded config file from cod as {}.".format(config_file))
+
+
+@click.option('--directory',
+              default='',
+              help='directory for the analysis to be executed')
 @click.option('--workflow_engine',
-              help='year the data set was recorded')
+              default='serial',
+              help='workflow engine to be used',
+              type=click.Choice(workflow_engines))
 @click.option('--nevents',
+              default='1',  # ToDo: change to "-1" for full data set reco
               help='number of events to be reconstructed')
 @click.option('--dataset',
+              default="DoubleElectron",
               help='data set to be reconstructed')
 @click.option('--year',
-              help='year the data set was recorded')
+              default="2011",
+              help='year the data set was recorded',
+              type=click.Choice(valid_run_years)
+              )
 @cms_reco.command()
-def create_workflow(year='2011', dataset="DoubleElectron", nevents='1', workflow_engine='serial'):
-    workflow_engine = validate_workflow_engine(workflow_engine)
+def create_workflow(year, dataset, nevents, workflow_engine, directory):
+    """Create workflow from given parameters."""
     template_path = "{}/cms_reco/cookiecutter_template/workflow_factory/{}"\
         .format(os.getcwd(), workflow_engine)
 
-    config = get_config(year, dataset)
+    config = get_config_from_json()
 
-    print("Created `cms-reco-{}-{}` directory.".format(dataset, year))
-
+    # Set additional configs
     if nevents:
         config['nevents'] = nevents
+    if directory:
+        config['directory_name'] = directory
 
-    cookiecutter(template_path,
-                 no_input=True,
-                 extra_context=config
-                 )
+    try:
+        cookiecutter(template_path, no_input=True, extra_context=config)
+    except OutputDirExistsException:
+        print("Output Directory already exists, please choose a different name \
+        or rename the existing one.")
+    print("Created `{0}` directory.".format(config["directory_name"]))

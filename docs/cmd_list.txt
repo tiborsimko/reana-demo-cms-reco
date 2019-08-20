@@ -1,0 +1,12 @@
+Usage: cms-reco [OPTIONS] COMMAND [ARGS]...
+
+  Info.
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  create-workflow    Create workflow from given parameters.
+  load-config        Download config file using the cern open data client.
+  run-full-pipeline  Run a full analysis.
+  run-reco           Run the reconstructed workflow analysis on reana.

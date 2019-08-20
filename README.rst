@@ -1,6 +1,6 @@
-=================
- REANA-CMS reco
-=================
+===========================
+ REANA-CMS Reconstruction
+===========================
 
 .. image:: https://img.shields.io/pypi/pyversions/reana-demo-cms-reco.svg
    :target: https://pypi.org/pypi/reana-demo-cms-reco
@@ -109,24 +109,19 @@ Following successful tests (see other branches), we know that REANA is able to
 run CMS reconstruction for a variety of RAW samples (e.g. dataset SingleMu) and
 data-taking years (e.g. 2011).
 
-Features
+Example
 ---------
-
-The main use case is the command:
+The following will generate the workflow to run the example for a given record
+id, with its metadata retrieved using the `COD Client <https://github.com/cernopendata/cernopendata-client>`_.
+This generates a workflow in a given output directory, where the `reana.yaml`
+file lives with all necessary inputs.
 
 .. code-block:: console
 
-    $ cms-reco --create-workflow --dataset SingleElectron --year 2011
+    $ cernopendata-client get-record --recid 39 | tee cms-reco-config.json
+    # # use the values from the 'cms-reco-config.json' file
+    $ cms-reco --create-workflow
         Created `cms-reco-SingleElectron-2011` directory.
     $ cd cms-reco-SingleElectron-2011
     $ reana-client run
 
-which will generate (using default parameters) the workflow to run the example
-of the 2011 branch. This generates a workflow in a given output directory that
-is ready to run REANA, with all  necessary input file information and
-configuration files.
-
-
-Questions
----------
-- project structure

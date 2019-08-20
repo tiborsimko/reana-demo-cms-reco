@@ -6,63 +6,159 @@
 # REANA is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-valid_run_years = ["2010", "2011", "2012"]
+"""Reana workflow factory helper functions."""
 
-datasets = {"DoubleElectron": "'root://eospublic.cern.ch//eos/opendata/cms/Run2011A/DoubleElectron/RAW/v1/000/160/433/C046161E-0D4E-E011-BCBA-0030487CD906.root'"}
+import json
+import os
+import sys
+import shutil
+import subprocess as sp
+import urllib.request as ur
 
-global_tags = {"2011": "FT_53_LV5_AN1"}
+import jq
 
-cmssw_releases = {"2011": "5_3_32"}
+with open("{0}/cms_reco/cod-validation.json".format(os.getcwd())) \
+        as validation_file:
+    validation_data = json.load(validation_file)
 
-workflow_engines = ["serial", "cwl", "yadage"]
-
-
-def get_config(year, data):
-
-    return {'directory_name': get_directory_name(year, data),
-            'year': validate_year(year),
-            'cmssw_version': get_cmssw_release(year),
-            'global_tag': get_global_tag(year),
-            'dataset_file': get_datafile(data)
-            }
+    valid_run_years = validation_data["years"]
+    workflow_engines = validation_data["workflow_engines"]
 
 
-def validate_workflow_engine(workflow_engine):
-    if workflow_engine in workflow_engines:
-        return workflow_engine
+def get_config_from_json():
+    """Get the needed configuration variables from the COD client config."""
+    with open('{0}/cms_reco/cms-reco-config.json'.format(os.getcwd())) \
+            as config_file:
+        data = json.load(config_file)
+
+        return {'directory_name': custom_directory_name(data),
+                'year': get_year(data),
+                'cmssw_version': get_cms_release(data),
+                'global_tag': get_global_tag(data),
+                'dataset_file': get_dataset(data)
+                }
+
+
+def get_global_tag(data):
+    """Get the global tag for the CMS cond db."""
+    return jq.jq(".metadata.system_details.global_tag").transform(data)
+
+
+def get_cms_release(data):
+    """Get the CMS SW release version."""
+    # keep only the version number
+    return jq.jq(".metadata.system_details.release").transform(data)[6:]
+
+
+def download_index_file(data, local_file_name, file_format="txt"):
+    """Download the index file from COD platform."""
+    recid = get_recid(data)
+    url = get_index_file_name(data, recid, file_format)
+    try:
+        if not os.path.isfile(local_file_name):
+            ur.urlretrieve(url, local_file_name)
+
+    except Exception as e:
+        print("failed to download index file: {0}".format(e))
+
+
+def remove_additionally_generated_files(files):
+    """Remove files that the end user does not need."""
+    if type(files) in (tuple, list):
+        for file in files:
+            remove_additionally_generated_files(file)
+    elif type(files) == str:
+        if os.path.isfile(files):
+            os.remove(files)
+        else:
+            raise Exception("Error: {} file not found".format(files))
     else:
-        raise ValueError("Workflow engine {} is not supported."
-                         .format(workflow_engine))
+        raise Exception("Files type {} not recognized.".format(type(files)))
 
 
-def get_directory_name(year, data):
-    return "cms-reco-{}-{}".format(data, year)
+def remove_folder(mydir):
+    """Remove folder."""
+    try:
+        shutil.rmtree(mydir)
+    except OSError as e:
+        print("Error: {} - {}.".format(e.filename, e.strerror))
 
 
-def get_global_tag(year):
-    if year in global_tags:
-        return global_tags[year]
-    else:
-        raise ValueError("The year does not correspond to any global tag")
+def get_index_file_name(data, recid, file_format):
+    """Get the dataset specific index file name."""
+    if file_format == "txt":
+        index_file = jq.jq(".metadata._files").transform(data)[1]["key"]
+        url = "http://opendata.cern.ch/record/{0}//files/{1}" \
+            .format(recid, index_file)
+        return url
 
 
-def get_cmssw_release(year):
-    if year in cmssw_releases:
-        return cmssw_releases[year]
-    else:
-        raise ValueError("The year does not correspond to any CMSSW release")
+def get_dataset(data, local_file_name="./index.txt"):
+    """Get a data set file name from the index file."""
+    try:
+        download_index_file(data, local_file_name)
+        dataset = choose_dataset_from_file(local_file_name)
+    finally:
+        remove_additionally_generated_files(local_file_name)
+
+    return dataset
 
 
-def get_datafile(data):
-    if data in datasets:
-        return datasets[data]
-    else:
-        raise ValueError("Data not in data sets")
+def choose_dataset_from_file(local_file_name):
+    """Chose a specific dataset from file."""
+    with open("{0}/{1}".format(os.getcwd(), local_file_name)) as file:
+        # use the first dataset in the index file
+        dataset = file.readline()
+    return dataset
 
 
-def validate_year(year):
-    if year in valid_run_years:
-        return year
-    else:
-        raise ValueError("Not a valid run year")
+def get_recid(data):
+    """Get the record id."""
+    return jq.jq(".id").transform(data)
 
+
+def get_title(data):
+    """Get the data set title."""
+    return jq.jq(".metadata.title").transform(data)
+
+
+def get_year(data):
+    """Get creation year for the data set."""
+    return jq.jq(".metadata.date_created").transform(data)[0]
+
+
+def get_name_from_title(title):
+    """Get the data set name from the title."""
+    return os.path.dirname(os.path.dirname(title))[1:]
+
+
+def custom_directory_name(data):
+    """Return a custom directory name based on the title."""
+    return "cms-reco-{}-{}".format(get_name_from_title(get_title(data)),
+                                   get_year(data))
+
+
+def load_config_from_cod(recid, config_file):
+    """Get the config file using cern open data client."""
+    _cod_client = "cernopendata-client"
+    _get_config_cmd = "get-record --recid"
+    sp.call("{0} {1} {2} | tee {3}"
+            .format(_cod_client, _get_config_cmd, recid, config_file),
+            shell=True)
+
+
+def run_analysis(directory_name):
+    """Run the analysis on reana."""
+    sp.call("cd {0} && reana-client run reana.yaml"
+            .format(directory_name),
+            shell=True)
+
+
+def run_pipeline(recid, directory):
+    """Run the full pipeline."""
+    _cms_reco_client = "cms-reco"
+    sp.call("{0} load-config --recid {1} "
+            "&& {0} create-workflow --directory {2} "
+            "&& {0} run-reco --directory {2}"
+            .format(_cms_reco_client, recid, directory),
+            shell=True)
