@@ -17,12 +17,13 @@ import urllib.request as ur
 
 import jq
 
-with open("{0}/cms_reco/cod-validation.json".format(os.getcwd())) \
+with open("{0}/cms_reco/validation.json".format(os.getcwd())) \
         as validation_file:
     validation_data = json.load(validation_file)
 
     valid_run_years = validation_data["years"]
     workflow_engines = validation_data["workflow_engines"]
+    compute_backends = validation_data["compute_backends"]
 
 
 def get_config_from_json():
@@ -30,13 +31,18 @@ def get_config_from_json():
     with open('{0}/cms_reco/cms-reco-config.json'.format(os.getcwd())) \
             as config_file:
         data = json.load(config_file)
+        conf = {'error': None}
 
-        return {'directory_name': custom_directory_name(data),
-                'year': get_year(data),
-                'cmssw_version': get_cms_release(data),
-                'global_tag': get_global_tag(data),
-                'dataset_file': get_dataset(data)
-                }
+        try:
+            conf['directory_name'] = custom_directory_name(data)
+            conf['year'] = get_year(data)
+            conf['cmssw_version'] = get_cms_release(data)
+            conf['global_tag'] = get_global_tag(data)
+            conf['dataset_file'] = get_dataset(data)
+        except Exception as e:
+            conf['error'] = "Cannot retrieve config due to: {0}".format(e)
+
+        return conf
 
 
 def get_global_tag(data):
@@ -54,34 +60,20 @@ def download_index_file(data, local_file_name, file_format="txt"):
     """Download the index file from COD platform."""
     recid = get_recid(data)
     url = get_index_file_name(data, recid, file_format)
-    try:
-        if not os.path.isfile(local_file_name):
-            ur.urlretrieve(url, local_file_name)
-
-    except Exception as e:
-        print("failed to download index file: {0}".format(e))
+    if not os.path.isfile(local_file_name):
+        ur.urlretrieve(url, local_file_name)
+        return local_file_name
 
 
 def remove_additionally_generated_files(files):
     """Remove files that the end user does not need."""
-    if type(files) in (tuple, list):
-        for file in files:
-            remove_additionally_generated_files(file)
-    elif type(files) == str:
-        if os.path.isfile(files):
-            os.remove(files)
-        else:
-            raise Exception("Error: {} file not found".format(files))
-    else:
-        raise Exception("Files type {} not recognized.".format(type(files)))
+    if os.path.isfile(files):
+        os.remove(files)
 
 
 def remove_folder(mydir):
     """Remove folder."""
-    try:
-        shutil.rmtree(mydir)
-    except OSError as e:
-        print("Error: {} - {}.".format(e.filename, e.strerror))
+    shutil.rmtree(mydir)
 
 
 def get_index_file_name(data, recid, file_format):
@@ -95,11 +87,11 @@ def get_index_file_name(data, recid, file_format):
 
 def get_dataset(data, local_file_name="./index.txt"):
     """Get a data set file name from the index file."""
-    try:
-        download_index_file(data, local_file_name)
-        dataset = choose_dataset_from_file(local_file_name)
-    finally:
-        remove_additionally_generated_files(local_file_name)
+
+    download_index_file(data, local_file_name)
+    dataset = choose_dataset_from_file(local_file_name)
+
+    remove_additionally_generated_files(local_file_name)
 
     return dataset
 
