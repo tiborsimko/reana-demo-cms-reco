@@ -8,28 +8,40 @@
 
 """Reana workflow factory helper functions."""
 
+
 import json
+import logging
 import os
-import sys
 import shutil
 import subprocess as sp
+import traceback
 import urllib.request as ur
+from random import randint
 
 import jq
 
-with open("{0}/cms_reco/validation.json".format(os.getcwd())) \
-        as validation_file:
-    validation_data = json.load(validation_file)
+try:
+    validation_file = open(f"{os.getcwd()}/cms_reco/cod-validation.json")
+except FileNotFoundError:
+    validation_file = open(f"{os.getcwd()}/../cms_reco/cod-validation.json")
 
-    valid_run_years = validation_data["years"]
-    workflow_engines = validation_data["workflow_engines"]
-    compute_backends = validation_data["compute_backends"]
+logging.debug("Fetching validation data from {0}".format(validation_file))
+validation_data = json.load(validation_file)
+
+valid_run_years = validation_data["years"]
+valid_workflow_engines = validation_data["workflow_engines"]
+valid_compute_backends = validation_data["compute_backends"]
+valid_file_selection = validation_data["file_selection"]
+
+validation_file.close()
 
 
-def get_config_from_json():
+def get_config_from_json(file_selection):
     """Get the needed configuration variables from the COD client config."""
     with open('{0}/cms_reco/cms-reco-config.json'.format(os.getcwd())) \
             as config_file:
+        logging.debug("Fetching config data from {0}".format(config_file))
+
         data = json.load(config_file)
         conf = {'error': None}
 
@@ -38,9 +50,10 @@ def get_config_from_json():
             conf['year'] = get_year(data)
             conf['cmssw_version'] = get_cms_release(data)
             conf['global_tag'] = get_global_tag(data)
-            conf['dataset_file'] = get_dataset(data)
+            conf['dataset_file'] = get_dataset(data, file_selection)
         except Exception as e:
             conf['error'] = "Cannot retrieve config due to: {0}".format(e)
+            traceback.print_exc()
 
         return conf
 
@@ -52,11 +65,11 @@ def get_global_tag(data):
 
 def get_cms_release(data):
     """Get the CMS SW release version."""
-    # keep only the version number
+    # The slicing is needed to keep only the version number
     return jq.jq(".metadata.system_details.release").transform(data)[6:]
 
 
-def download_index_file(data, local_file_name, file_format="txt"):
+def download_index_file(data, local_file_name, file_format):
     """Download the index file from COD platform."""
     recid = get_recid(data)
     url = get_index_file_name(data, recid, file_format)
@@ -65,10 +78,10 @@ def download_index_file(data, local_file_name, file_format="txt"):
         return local_file_name
 
 
-def remove_additionally_generated_files(files):
+def remove_additionally_generated_files(file):
     """Remove files that the end user does not need."""
-    if os.path.isfile(files):
-        os.remove(files)
+    if os.path.isfile(file):
+        os.remove(file)
 
 
 def remove_folder(mydir):
@@ -78,29 +91,69 @@ def remove_folder(mydir):
 
 def get_index_file_name(data, recid, file_format):
     """Get the dataset specific index file name."""
-    if file_format == "txt":
+    if file_format == "json":
+        index_file = jq.jq(".metadata._files").transform(data)[0]["key"]
+    elif file_format == "txt":
         index_file = jq.jq(".metadata._files").transform(data)[1]["key"]
-        url = "http://opendata.cern.ch/record/{0}//files/{1}" \
-            .format(recid, index_file)
-        return url
+    else:
+        index_file = None
+
+    url = "http://opendata.cern.ch/record/{0}//files/{1}" \
+        .format(recid, index_file)
+    return url
 
 
-def get_dataset(data, local_file_name="./index.txt"):
+def get_dataset(data, file_selection, local_file_name="./index",
+                file_format="json"):
     """Get a data set file name from the index file."""
+    local_file_name += f".{file_format}"
+    logging.debug(f"Fetching data set as {local_file_name}")
 
-    download_index_file(data, local_file_name)
-    dataset = choose_dataset_from_file(local_file_name)
+    download_index_file(data, local_file_name, file_format)
+    dataset = choose_dataset_from_file(file_selection, local_file_name)
 
     remove_additionally_generated_files(local_file_name)
 
     return dataset
 
 
-def choose_dataset_from_file(local_file_name):
-    """Chose a specific dataset from file."""
-    with open("{0}/{1}".format(os.getcwd(), local_file_name)) as file:
-        # use the first dataset in the index file
-        dataset = file.readline()
+def choose_dataset_from_file(file_selection, local_file_name):
+    """Chose a specific data set from file."""
+    if ".txt" in local_file_name:
+        logging.debug("Fetching .txt format.")
+
+        # File selection is not supported in the .txt format, as there is no
+        # information stored about the size of the data files
+        with open("{0}/{1}".format(os.getcwd(), local_file_name)) as file:
+            # use the first dataset in the index file
+            dataset = file.readline()
+    elif ".json" in local_file_name:
+        logging.debug("Fetching .json format.")
+
+        with open("{0}/{1}".format(os.getcwd(), local_file_name)) as file:
+            index_data = json.load(file)
+            logging.debug("File selection is: {}".format(file_selection))
+
+            if file_selection == "first":
+                dataset = index_data[0]['uri']
+            elif file_selection == "smallest":
+                # This sorts by file size, with smallest first
+                index_data = sorted(index_data, key=lambda i: i['size'])
+                dataset = index_data[0]['uri']
+            elif file_selection == "largest":
+                # This sorts by file size, with smallest first
+                index_data = sorted(index_data, key=lambda i: i['size'])
+                dataset = index_data[-1]['uri']
+            elif file_selection == "random":
+                dataset_number = randint(0, len(index_data))
+                dataset = index_data[dataset_number]['uri']
+            elif file_selection == "all":
+                raise NotImplementedError
+            else:
+                dataset = None
+    else:
+        dataset = None
+
     return dataset
 
 
