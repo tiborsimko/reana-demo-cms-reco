@@ -12,16 +12,23 @@ import os
 import subprocess as sp
 import urllib.request as ur
 
+from cms_reco.utils import remove_additionally_generated_files, remove_folder
 
-def generate_file(recid=46, directory='test'):
+
+def generate_file(recid=46, directory='tests', workflow_engine='serial'):
     """Generate the reana.yaml using the workflow factory."""
-    _cms_reco_client = "cms-reco"
 
-    sp.call("{0} load-config --recid {1} "
-            "&& {0} create-workflow --directory {2} "
-            .format(_cms_reco_client, recid, directory),
+    sp.call(f"cms-reco load-config --recid {recid} "
+            f"&& cms-reco  create-workflow --directory {directory}"
+            f" --workflow_engine {workflow_engine}",
             shell=True)
-    workflow_file = "{0}/reana.yaml".format(directory)
+
+    workflow_file = None
+    if workflow_engine == "serial":
+        workflow_file = f"{directory}/reana.yaml"
+    elif workflow_engine == "cwl":
+        workflow_file = f"{directory}/workflow/reco.cwl"
+
     if os.path.isfile(workflow_file):
         return workflow_file
     else:
@@ -37,3 +44,28 @@ def download_existing_file(url, local_file_name='reference.yaml'):
 def compare_files(ref_file, gen_file):
     """Compare two files for their content."""
     return filecmp.cmp(ref_file, "{0}".format(gen_file), shallow=False)
+
+
+def workflow_test(reference_repo, recid=46, local_file_name="reference.yaml",
+                  workflow_engine="serial", to_delete=True):
+    """Test template."""
+    try:
+        _tmp_folder = "tests"
+        ref_file = download_existing_file(
+            reference_repo,
+            local_file_name=local_file_name)
+
+        gen_file = generate_file(recid=recid, directory=_tmp_folder,
+                                 workflow_engine=workflow_engine)
+
+        if not ref_file:
+            raise Exception("Reference file not downloaded.")
+        elif not gen_file:
+            raise Exception("Workflow not generated from factory.")
+
+        assert compare_files(ref_file, gen_file)
+
+    finally:
+        if to_delete:
+            remove_additionally_generated_files(ref_file)
+            remove_folder(_tmp_folder)

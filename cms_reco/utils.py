@@ -38,24 +38,27 @@ validation_file.close()
 
 def get_config_from_json(file_selection):
     """Get the needed configuration variables from the COD client config."""
-    with open('{0}/cms_reco/cms-reco-config.json'.format(os.getcwd())) \
-            as config_file:
-        logging.debug("Fetching config data from {0}".format(config_file))
+    try:
+        config_file = open(f"{os.getcwd()}/cms_reco/cms-reco-config.json")
+    except FileNotFoundError:
+        config_file = open(f"{os.getcwd()}/../cms_reco/cms-reco-config.json")
 
-        data = json.load(config_file)
-        conf = {'error': None}
+    logging.debug("Fetching config data from {0}".format(config_file))
 
-        try:
-            conf['directory_name'] = custom_directory_name(data)
-            conf['year'] = get_year(data)
-            conf['cmssw_version'] = get_cms_release(data)
-            conf['global_tag'] = get_global_tag(data)
-            conf['dataset_file'] = get_dataset(data, file_selection)
-        except Exception as e:
-            conf['error'] = "Cannot retrieve config due to: {0}".format(e)
-            traceback.print_exc()
+    data = json.load(config_file)
+    conf = {'error': None}
 
-        return conf
+    try:
+        conf['directory_name'] = custom_directory_name(data)
+        conf['year'] = get_year(data)
+        conf['cmssw_version'] = get_cms_release(data)
+        conf['global_tag'] = get_global_tag(data)
+        conf['dataset_file'] = get_dataset(data, file_selection)
+    except Exception as e:
+        conf['error'] = "Cannot retrieve config due to: {0}".format(e)
+        traceback.print_exc()
+
+    return conf
 
 
 def get_global_tag(data):
@@ -192,18 +195,11 @@ def load_config_from_cod(recid, config_file):
             shell=True)
 
 
-def run_analysis(directory_name):
-    """Run the analysis on reana."""
-    sp.call("cd {0} && reana-client run reana.yaml"
-            .format(directory_name),
-            shell=True)
+def get_template(workflow_engine):
+    """Get the template directory."""
+    dir_path = os.getcwd()
+    if 'tests' in dir_path:
+        dir_path = dir_path.replace("/tests", "")
 
-
-def run_pipeline(recid, directory):
-    """Run the full pipeline."""
-    _cms_reco_client = "cms-reco"
-    sp.call("{0} load-config --recid {1} "
-            "&& {0} create-workflow --directory {2} "
-            "&& {0} run-reco --directory {2}"
-            .format(_cms_reco_client, recid, directory),
-            shell=True)
+    return f"{dir_path}/cms_reco/cookiecutter_template/" \
+           f"workflow_factory/{workflow_engine}"

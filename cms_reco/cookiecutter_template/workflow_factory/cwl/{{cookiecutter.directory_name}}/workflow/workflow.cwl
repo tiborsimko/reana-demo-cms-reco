@@ -6,9 +6,9 @@
 #   $ mkdir cwl-local-run
 #   $ cd cwl-local-run
 #   $ cp -a ../workflow/input.yml .
-#   # change path for hte input file, e.g. by using sed
-#   $ sed -i 's/reco_cmsdriver2011.py/..\/..\/reco_cmsdriver2011.py/g' input.yml
-#   $ cp -a ../reco_cmsdriver2011.py .
+#   $ cp -a ../BuildFile.xml ../demoanalyzer_cfg.py .
+#   $ mkdir src
+#   $ cp -a ../src/PhysicsObjectsHistos.cc ./src/
 #   $ cwltool --quiet --outdir="../results" ../workflow/workflow.cwl input.yml
 
 
@@ -16,22 +16,33 @@ cwlVersion: v1.0
 class: Workflow
 
 inputs:
-  reco_tool: File
+  library:
+    type: File
+  build_file:
+    type: File
+  validation_script:
+    type: File
 
 outputs:
   result.root:
     type: File
     outputSource:
-      step1/result.root
-  step1.log:
+      reco/result.root
+  histo.root:
     type: File
     outputSource:
-      step1/step1.log
+      reco/histo.root
+  reco.log:
+    type: File
+    outputSource:
+      reco/reco.log
 
 
 steps:
-  step1:
-    run: step1.cwl
+  reco:
     in:
-      reco_tool: reco_tool
-    out: [DoubleMu.root, step1.log]
+      library: library
+      build_file: build_file
+      validation_script: validation_script
+    run: reco.cwl
+    out: [result.root, histo.root, reco.log]

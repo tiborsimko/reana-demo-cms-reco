@@ -17,14 +17,14 @@ import click
 from cookiecutter.exceptions import OutputDirExistsException
 from cookiecutter.main import cookiecutter
 
-from .utils import (get_config_from_json, load_config_from_cod,
+from .utils import (get_config_from_json, get_template, load_config_from_cod,
                     valid_compute_backends, valid_file_selection,
                     valid_run_years, valid_workflow_engines)
 
 
 @click.group()
 def cms_reco():
-    """Info."""
+    """Workflow factory for the cms reconstruction analysis."""
     pass
 
 
@@ -35,7 +35,7 @@ def cms_reco():
               help='recid for the data set to be reconstructed')
 @cms_reco.command()
 def load_config(recid, config_file):
-    """Download config file using the cern open data client."""
+    """Download config file using the cern-open-data client."""
     load_config_from_cod(recid, config_file)
     print("Downloaded config file from cod as {}.".format(config_file))
 
@@ -71,14 +71,11 @@ def load_config(recid, config_file):
 @cms_reco.command()
 def create_workflow(compute_backend, dataset, directory, files, nevents,
                     quiet, workflow_engine, year):
-    """Create workflow from given parameters."""
+    """Create workflow from json config file or from given arguments."""
     logging.basicConfig(
         format='[%(levelname)s] %(message)s',
         stream=sys.stderr,
         level=logging.INFO if quiet else logging.DEBUG)
-
-    template_path = "{}/cms_reco/cookiecutter_template/workflow_factory/{}"\
-        .format(os.getcwd(), workflow_engine)
 
     # Set COD configs
     config = get_config_from_json(file_selection=files)
@@ -97,7 +94,9 @@ def create_workflow(compute_backend, dataset, directory, files, nevents,
             config['directory_name'] = directory
 
         try:
-            cookiecutter(template_path, no_input=True, extra_context=config)
+            cookiecutter(get_template(workflow_engine),
+                         no_input=True,
+                         extra_context=config)
         except OutputDirExistsException:
             logging.warning("Output Directory already exists, please choose a "
                             "different name or rename the existing one.")

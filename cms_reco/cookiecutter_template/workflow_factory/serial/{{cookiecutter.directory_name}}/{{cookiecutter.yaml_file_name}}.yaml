@@ -38,5 +38,5 @@ workflow:
 
 outputs:
   files:
-    - CMSSW_5_3_32/src/Reconstruction/Validation/reco_RAW2DIGI_L1Reco_RECO_USER.root
-    - CMSSW_5_3_32/src/Reconstruction/Validation/histodemo.root
+    - CMSSW_{{cookiecutter.cmssw_version}}/src/Reconstruction/Validation/reco_RAW2DIGI_L1Reco_RECO_USER.root
+    - CMSSW_{{cookiecutter.cmssw_version}}/src/Reconstruction/Validation/histodemo.root

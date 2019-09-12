@@ -1,3 +1,9 @@
-reco_tool:
+library:
   class: File
-  path: reco_cmsdriver.py
+  path: src/PhysicsObjectsHistos.cc
+build_file:
+  class: File
+  path: BuildFile.xml
+validation_script:
+  class: File
+  path: demoanalyzer_cfg.py
