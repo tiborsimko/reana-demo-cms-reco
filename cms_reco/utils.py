@@ -36,12 +36,12 @@ valid_file_selection = validation_data["file_selection"]
 validation_file.close()
 
 
-def get_config_from_json(file_selection):
+def get_config_from_json(file_selection, config_file):
     """Get the needed configuration variables from the COD client config."""
     try:
-        config_file = open(f"{os.getcwd()}/cms_reco/cms-reco-config.json")
+        config_file = open(f"{os.getcwd()}/{config_file}")
     except FileNotFoundError:
-        config_file = open(f"{os.getcwd()}/../cms_reco/cms-reco-config.json")
+        config_file = open(f"{os.getcwd()}/../{config_file}")
 
     logging.debug("Fetching config data from {0}".format(config_file))
 
@@ -52,7 +52,7 @@ def get_config_from_json(file_selection):
         conf['directory_name'] = custom_directory_name(data)
         conf['year'] = get_year(data)
         conf['cmssw_version'] = get_cms_release(data)
-        conf['global_tag'] = get_global_tag(data)
+        conf['global_tag'], conf['global_tag_suffix'] = get_global_tag(data)
         conf['dataset_file'] = get_dataset(data, file_selection)
     except Exception as e:
         conf['error'] = "Cannot retrieve config due to: {0}".format(e)
@@ -63,13 +63,31 @@ def get_config_from_json(file_selection):
 
 def get_global_tag(data):
     """Get the global tag for the CMS cond db."""
-    return jq.jq(".metadata.system_details.global_tag").transform(data)
+    global_tag = jq.jq(".metadata.system_details.global_tag").transform(data)
+
+    # The global tag value contains sometimes the"::All" suffix
+    if "::All" in global_tag:
+        global_tag = global_tag.replace("::All", "")
+
+    # For years after 2011, there is an additional suffix needed
+    if "53" in global_tag:
+        suffix = "_RUNA"
+    else:
+        suffix = ""
+
+    return global_tag, suffix
 
 
 def get_cms_release(data):
     """Get the CMS SW release version."""
+    release = jq.jq(".metadata.system_details.release").transform(data)
+
+    # Sometimes the release value begins wrongly with a white space
+    if " " in release:
+        release = release.replace(" ", "")
+
     # The slicing is needed to keep only the version number
-    return jq.jq(".metadata.system_details.release").transform(data)[6:]
+    return release[6:]
 
 
 def download_index_file(data, local_file_name, file_format):
@@ -81,10 +99,14 @@ def download_index_file(data, local_file_name, file_format):
         return local_file_name
 
 
-def remove_additionally_generated_files(file):
+def remove_additionally_generated_files(files):
     """Remove files that the end user does not need."""
-    if os.path.isfile(file):
-        os.remove(file)
+    if type(files) is str:
+        files = [files]
+
+    for item in files:
+        if os.path.isfile(item):
+            os.remove(item)
 
 
 def remove_folder(mydir):
@@ -188,10 +210,10 @@ def custom_directory_name(data):
 
 def load_config_from_cod(recid, config_file):
     """Get the config file using cern open data client."""
-    _cod_client = "cernopendata-client"
-    _get_config_cmd = "get-record --recid"
-    sp.call("{0} {1} {2} | tee {3}"
-            .format(_cod_client, _get_config_cmd, recid, config_file),
+    _cod_client = ""
+    _get_config_cmd = ""
+    sp.call(f"cernopendata-client "
+            f"get-record --recid {recid} | tee {config_file}",
             shell=True)
 
 
@@ -201,5 +223,5 @@ def get_template(workflow_engine):
     if 'tests' in dir_path:
         dir_path = dir_path.replace("/tests", "")
 
-    return f"{dir_path}/cms_reco/cookiecutter_template/" \
+    return f"{dir_path}/cms_reco/cookiecutter_templates/" \
            f"workflow_factory/{workflow_engine}"

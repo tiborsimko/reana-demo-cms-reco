@@ -12,15 +12,19 @@ import os
 import subprocess as sp
 import urllib.request as ur
 
-from cms_reco.utils import remove_additionally_generated_files, remove_folder
+from cms_reco.utils import (load_config_from_cod,
+                            remove_additionally_generated_files,
+                            remove_folder)
 
 
-def generate_file(recid=46, directory='tests', workflow_engine='serial'):
+def generate_file(recid, directory, workflow_engine, config_file):
     """Generate the reana.yaml using the workflow factory."""
 
-    sp.call(f"cms-reco load-config --recid {recid} "
-            f"&& cms-reco  create-workflow --directory {directory}"
-            f" --workflow_engine {workflow_engine}",
+    load_config_from_cod(recid, config_file=f"{config_file}")
+
+    sp.call(f"cms-reco  create-workflow --directory {directory}"
+            f" --workflow_engine {workflow_engine}"
+            f" --config_file {config_file}",
             shell=True)
 
     workflow_file = None
@@ -46,16 +50,17 @@ def compare_files(ref_file, gen_file):
     return filecmp.cmp(ref_file, "{0}".format(gen_file), shallow=False)
 
 
-def workflow_test(reference_repo, recid=46, local_file_name="reference.yaml",
-                  workflow_engine="serial", to_delete=True):
+def workflow_test(reference_repo, recid, local_file_name="reference.yaml",
+                  workflow_engine="serial", to_delete=True, tmp_folder="tmp"):
     """Test template."""
     try:
-        _tmp_folder = "tests"
+        config_file = f"config.json"
         ref_file = download_existing_file(
             reference_repo,
             local_file_name=local_file_name)
 
-        gen_file = generate_file(recid=recid, directory=_tmp_folder,
+        gen_file = generate_file(config_file=config_file,
+                                 recid=recid, directory=tmp_folder,
                                  workflow_engine=workflow_engine)
 
         if not ref_file:
@@ -67,5 +72,6 @@ def workflow_test(reference_repo, recid=46, local_file_name="reference.yaml",
 
     finally:
         if to_delete:
-            remove_additionally_generated_files(ref_file)
-            remove_folder(_tmp_folder)
+            remove_additionally_generated_files([ref_file, config_file])
+
+            remove_folder(tmp_folder)

@@ -1,6 +1,6 @@
-===========================
- REANA-CMS Reconstruction
-===========================
+====================================
+ REANA example - CMS Reconstruction
+====================================
 
 .. image:: https://img.shields.io/pypi/pyversions/reana-demo-cms-reco.svg
    :target: https://pypi.org/pypi/reana-demo-cms-reco
@@ -98,10 +98,6 @@ specific environment are then:
       $ ls -l /cvmfs/
       $ cmsRun reco_cmsdriver2011.py
 
-=======
------
->>>>>>> f1ffcd3... First draft of the workflow factory
-
 This demo represents a "workflow factory" script that will produce REANA
 workflows for given parameters for the CMS RAW to AOD reconstruction procedure.
 
@@ -125,3 +121,10 @@ file lives with all necessary inputs.
     $ cd cms-reco-SingleElectron-2011
     $ reana-client run
 
+Authors
+=======
+
+The list of contributors in alphabetical order:
+
+- `Daniel Prelipcean <https://orcid.org/0000-0002-4855-194X>`_
+- `Tibor Simko <https://orcid.org/0000-0001-7202-5803>`_

@@ -40,6 +40,9 @@ def load_config(recid, config_file):
     print("Downloaded config file from cod as {}.".format(config_file))
 
 
+@click.option('--config_file',
+              default="cms_reco/cms-reco-config.json",
+              help='the config file used to extract the parameters')
 @click.option('--compute_backend',
               default='kubernetes',
               help='compute backend to be used',
@@ -69,8 +72,8 @@ def load_config(recid, config_file):
               type=click.Choice(valid_run_years)
               )
 @cms_reco.command()
-def create_workflow(compute_backend, dataset, directory, files, nevents,
-                    quiet, workflow_engine, year):
+def create_workflow(config_file, compute_backend, dataset, directory, files,
+                    nevents, quiet, workflow_engine, year):
     """Create workflow from json config file or from given arguments."""
     logging.basicConfig(
         format='[%(levelname)s] %(message)s',
@@ -78,7 +81,7 @@ def create_workflow(compute_backend, dataset, directory, files, nevents,
         level=logging.INFO if quiet else logging.DEBUG)
 
     # Set COD configs
-    config = get_config_from_json(file_selection=files)
+    config = get_config_from_json(config_file=config_file, file_selection=files)
 
     if config['error']:
         logging.warning(config['error'])

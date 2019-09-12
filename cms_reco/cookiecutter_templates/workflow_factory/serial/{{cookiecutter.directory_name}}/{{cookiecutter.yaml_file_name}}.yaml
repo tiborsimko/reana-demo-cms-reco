@@ -21,11 +21,11 @@ workflow:
             && mkdir Reconstruction && cd Reconstruction
             && mkdir Validation && cd Validation
             && cmsDriver.py reco -s RAW2DIGI,L1Reco,RECO,USER:EventFilter/HcalRawToDigi/hcallaserhbhehffilter2012_cff.hcallLaser2012Filter --data --filein='{{cookiecutter.dataset_file}}' --conditions {{cookiecutter.global_tag}}::All --eventcontent AOD  --no_exec --python reco_cmsdriver.py
-            && sed -i 's/from Configuration.AlCa.GlobalTag import GlobalTag/process.GlobalTag.connect = cms.string("sqlite_file:\/cvmfs\/cms-opendata-conddb.cern.ch\/{{cookiecutter.global_tag}}_RUNA.db")/g' reco_cmsdriver.py
+            && sed -i 's/from Configuration.AlCa.GlobalTag import GlobalTag/process.GlobalTag.connect = cms.string("sqlite_file:\/cvmfs\/cms-opendata-conddb.cern.ch\/{{cookiecutter.global_tag}}{{cookiecutter.global_tag_suffix}}.db")/g' reco_cmsdriver.py
             && sed -i 's/# Other statements/from Configuration.AlCa.GlobalTag import GlobalTag/g' reco_cmsdriver.py
             && sed -i "s/process.GlobalTag = GlobalTag(process.GlobalTag, '{{cookiecutter.global_tag}}::All', '')/process.GlobalTag.globaltag = '{{cookiecutter.global_tag}}::All'/g" reco_cmsdriver.py
-            && ln -sf /cvmfs/cms-opendata-conddb.cern.ch/{{cookiecutter.global_tag}}_RUNA {{cookiecutter.global_tag}}
-            && ln -sf /cvmfs/cms-opendata-conddb.cern.ch/{{cookiecutter.global_tag}}_RUNA.db {{cookiecutter.global_tag}}_RUNA.db
+            && ln -sf /cvmfs/cms-opendata-conddb.cern.ch/{{cookiecutter.global_tag}}{{cookiecutter.global_tag_suffix}} {{cookiecutter.global_tag}}
+            && ln -sf /cvmfs/cms-opendata-conddb.cern.ch/{{cookiecutter.global_tag}}{{cookiecutter.global_tag_suffix}}.db {{cookiecutter.global_tag}}{{cookiecutter.global_tag_suffix}}.db
             && ls -l
             && ls -l /cvmfs/
             && cmsRun reco_cmsdriver.py
