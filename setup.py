@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of reana
-# Copyright (C) 2019 CERN.
+# Copyright (C) 2019, 2022 CERN.
 #
 # reana is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -20,11 +20,6 @@ tests_require = [
 ]
 
 extras_require = {
-    'docs': [
-        'Sphinx>=1.4.4,<2.0',
-        'sphinx-rtd-theme>=0.1.9',
-        'sphinx-click>=1.0.4',
-    ],
     'tests': tests_require,
 }
 

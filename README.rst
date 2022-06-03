@@ -107,10 +107,20 @@ data-taking years (e.g. 2011).
 
 Example
 ---------
-The following will generate the workflow to run the example for a given record
+Before running example, you might want to install necessary packages:
+
+.. code-block:: console
+
+    $ # create new virtual environment
+    $ virtualenv ~/.virtualenvs/myreana
+    $ source ~/.virtualenvs/myreana/bin/activate
+    $ # install reana-commons and reana-client
+    $ pip install git+git://github.com/reanahub/reana-demo-cms-reco.git@master#egg=cms-reco
+
+After, the following will generate the workflow to run the example for a given record
 id, with its metadata retrieved using the `COD Client <https://github.com/cernopendata/cernopendata-client>`_.
 This generates a workflow in a given output directory, where the `reana.yaml`
-file lives with all necessary inputs.
+file lives with all necessary inputs:
 
 .. code-block:: console
 

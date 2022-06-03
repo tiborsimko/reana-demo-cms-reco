@@ -9,10 +9,4 @@
 #ToDo: use the branches for different years as tests cases
 
 pydocstyle cms_reco && \
-isort -rc -c -df **/*.py && \
-cms-reco --help > cmd_list.txt && \
-diff -q -w docs/cmd_list.txt cmd_list.txt  && \
-rm cmd_list.txt && \
-sphinx-build -qnNW docs docs/_build/html && \
-python setup.py test && \
-sphinx-build -qnNW -b doctest docs docs/_build/doctest
+python setup.py test
