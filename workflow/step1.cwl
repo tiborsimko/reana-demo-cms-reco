@@ -3,7 +3,7 @@ cwlVersion: v1.0
 
 requirements:
   - class: DockerRequirement
-    dockerPull: cmsopendata/cmssw_5_3_32
+    dockerPull: docker.io/cmsopendata/cmssw_5_3_32
 
 baseCommand:
   - /bin/zsh
