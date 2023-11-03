@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of reana.
-# Copyright (C) 2019 CERN.
+# Copyright (C) 2019, 2023 CERN.
 #
 # REANA is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
 
-from tests.utils_test import workflow_test
+from utils_test import workflow_test
 
 
 def test_2010_jet_serial():
