@@ -51,6 +51,10 @@ lint_jsonlint() {
     find . -name "*.json" -exec jsonlint -q {} \+
 }
 
+lint_markdownlint() {
+    markdownlint-cli2 "**/*.md"
+}
+
 lint_pydocstyle() {
     pydocstyle cms_reco
 }
@@ -71,6 +75,7 @@ all() {
     format_shfmt
     lint_commitlint
     lint_jsonlint
+    lint_markdownlint
     lint_pydocstyle
     lint_shellcheck
     lint_yamllint
@@ -80,15 +85,16 @@ all() {
 help() {
     echo "Usage: $0 [options]"
     echo "Options:"
-    echo "  --all              Perform all checks [default]"
-    echo "  --format-shfmt     Check formatting of shell scripts"
-    echo "  --help             Display this help message"
-    echo "  --lint-commitlint  Check linting of commit messages"
-    echo "  --lint-jsonlint    Check linting of JSON files"
-    echo "  --lint-pydocstyle  Check linting of Python docstrings"
-    echo "  --lint-shellcheck  Check linting of shell scripts"
-    echo "  --lint-yamllint    Check linting of YAML files"
-    echo "  --python-tests     Check Python test suite"
+    echo "  --all                Perform all checks [default]"
+    echo "  --format-shfmt       Check formatting of shell scripts"
+    echo "  --help               Display this help message"
+    echo "  --lint-commitlint    Check linting of commit messages"
+    echo "  --lint-jsonlint      Check linting of JSON files"
+    echo "  --lint-markdownlint  Check linting of Markdown files"
+    echo "  --lint-pydocstyle    Check linting of Python docstrings"
+    echo "  --lint-shellcheck    Check linting of shell scripts"
+    echo "  --lint-yamllint      Check linting of YAML files"
+    echo "  --python-tests       Check Python test suite"
 }
 
 if [ $# -eq 0 ]; then
@@ -103,6 +109,7 @@ case $arg in
 --format-shfmt) format_shfmt ;;
 --lint-commitlint) lint_commitlint "$@" ;;
 --lint-jsonlint) lint_jsonlint ;;
+--lint-markdownlint) lint_markdownlint ;;
 --lint-pydocstyle) lint_pydocstyle ;;
 --lint-shellcheck) lint_shellcheck ;;
 --lint-yamllint) lint_yamllint ;;
