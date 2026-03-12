@@ -7,23 +7,22 @@
 ## About
 
 This REANA reproducible analysis example demonstrates the reconstruction
-procedure of the CMS collaboration from [raw
-data](http://opendata.cern.ch/search?page=1&size=20&experiment=CMS&file_type=raw)
-to [Analysis Object Data
-(AOD)](https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookDataFormats#AoD),
+procedure of the CMS collaboration from
+[raw data](http://opendata.cern.ch/search?page=1&size=20&experiment=CMS&file_type=raw)
+to
+[Analysis Object Data (AOD)](https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookDataFormats#AoD),
 for the year `2011` and the data set `DoubleElectron`.
 
 The workflow consists of the steps need for the samples reconstruction, as taken
-from the [CMS legacy validation
-repo](https://github.com/cms-legacydata-validation/RAWToAODValidation/tree/master).
+from the
+[CMS legacy validation repo](https://github.com/cms-legacydata-validation/RAWToAODValidation/tree/master).
 
 ## Reconstruction procedure
 
 ### 1 & 2. Input data and Analysis code
 
 Any raw input data from the
-[CERN open data
-platform](http://opendata.cern.ch/search?page=1&size=20&experiment=CMS&type=Dataset&subtype=Collision&subtype=Derived&subtype=Simulated&file_type=raw)
+[CERN open data platform](http://opendata.cern.ch/search?page=1&size=20&experiment=CMS&type=Dataset&subtype=Collision&subtype=Derived&subtype=Simulated&file_type=raw)
 should be valid for reconstruction. In this example, the input is taken from:
 `root://eospublic.cern.ch//eos/opendata/cms/Run2011A/DoubleElectron/RAW/v1/000/160/433/C046161E-0D4E-E011-BCBA-0030487CD906.root`
 
@@ -51,8 +50,8 @@ corresponds to data sets taken in different years. Instructions can be found
 under [this repo](http://opendata.cern.ch/docs/cms-guide-docker).
 
 Moreover, the re-reconstruction task needs access run-time to the condition
-database and inside a [CMS
-VM](http://opendata.cern.ch/search?page=1&size=20&q=virtual%20machine&subtype=VM&type=Environment&experiment=CMS),
+database and inside a
+[CMS VM](http://opendata.cern.ch/search?page=1&size=20&q=virtual%20machine&subtype=VM&type=Environment&experiment=CMS),
 this is achieved with the commands:
 
 ```console
@@ -63,16 +62,14 @@ $ ln -sf /cvmfs/cms-opendata-conddb.cern.ch/FT_53_LV5_AN1_RUNA.db FT_53_LV5_AN1_
 For REANA, the condition database on CVMFS can be accessed with any container,
 the only requirement is that the user should specify the necessary CVMFS volumes
 to be live-mounted in the `reana.yaml` resource section, as described
-[on the
-web](https://reana.readthedocs.io/en/latest/userguide.html#declare-necessary-resources).
+[on the web](https://reana.readthedocs.io/en/latest/userguide.html#declare-necessary-resources).
 
 ### 4. Analysis workflow
 
 First, we have to set up the environment variables accordingly for the
 [CMS SW](http://cms-sw.github.io/). Although this is done in the docker image,
-REANA overrides them and they need to be reset. This is done by copying the [cms
-entrypoint.sh
-script](https://github.com/clelange/cmssw-docker/blob/master/standalone/entrypoint.sh):
+REANA overrides them and they need to be reset. This is done by copying the
+[cms entrypoint.sh script](https://github.com/clelange/cmssw-docker/blob/master/standalone/entrypoint.sh):
 
 ```console
 $ source /opt/cms/cmsset_default.sh
@@ -112,10 +109,10 @@ $ pip install git+git://github.com/reanahub/reana-demo-cms-reco.git@master#egg=c
 ```
 
 After, the following will generate the workflow to run the example for a given
-record id, with its metadata retrieved using the [COD
-Client](https://github.com/cernopendata/cernopendata-client). This generates a
-workflow in a given output directory, where the `reana.yaml` file lives with all
-necessary inputs:
+record id, with its metadata retrieved using the
+[COD Client](https://github.com/cernopendata/cernopendata-client). This
+generates a workflow in a given output directory, where the `reana.yaml` file
+lives with all necessary inputs:
 
 ```console
 $ cernopendata-client get-record --recid 39 | tee cms-reco-config.json
