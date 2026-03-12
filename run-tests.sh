@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # This file is part of REANA.
-# Copyright (C) 2019, 2023, 2024 CERN.
+# Copyright (C) 2019, 2022, 2023, 2024, 2025, 2026 CERN.
 #
 # REANA is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -9,7 +9,7 @@
 set -o errexit
 set -o nounset
 
-check_commitlint () {
+lint_commitlint() {
     from=${2:-master}
     to=${3:-HEAD}
     pr=${4:-[0-9]+}
@@ -43,35 +43,48 @@ check_commitlint () {
     fi
 }
 
-check_shellcheck () {
-    find . -name "*.sh" -exec shellcheck {} \+
-}
-
-check_pydocstyle () {
+lint_pydocstyle() {
     pydocstyle cms_reco
 }
 
-check_pytest () {
+lint_shellcheck() {
+    find . -name "*.sh" -exec shellcheck {} \+
+}
+
+python_tests() {
     python setup.py test
 }
 
-check_all () {
-    check_commitlint
-    check_shellcheck
-    check_pydocstyle
-    check_pytest
+all() {
+    lint_commitlint
+    lint_pydocstyle
+    lint_shellcheck
+    python_tests
+}
+
+help() {
+    echo "Usage: $0 [options]"
+    echo "Options:"
+    echo "  --all              Perform all checks [default]"
+    echo "  --help             Display this help message"
+    echo "  --lint-commitlint  Check linting of commit messages"
+    echo "  --lint-pydocstyle  Check linting of Python docstrings"
+    echo "  --lint-shellcheck  Check linting of shell scripts"
+    echo "  --python-tests     Check Python test suite"
 }
 
 if [ $# -eq 0 ]; then
-    check_all
+    all
     exit 0
 fi
 
 arg="$1"
 case $arg in
-    --check-commitlint) check_commitlint "$@";;
-    --check-shellcheck) check_shellcheck;;
-    --check-pydocstyle) check_pydocstyle;;
-    --check-pytest) check_pytest;;
-    *) echo "[ERROR] Invalid argument '$arg'. Exiting." && exit 1;;
+--all) all ;;
+--help) help ;;
+--lint-commitlint) lint_commitlint "$@" ;;
+--lint-pydocstyle) lint_pydocstyle ;;
+--lint-shellcheck) lint_shellcheck ;;
+--python-tests) python_tests ;;
+*) echo "[ERROR] Invalid argument '$arg'. Exiting." && help && exit 1 ;;
 esac
