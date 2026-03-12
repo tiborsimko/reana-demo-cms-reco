@@ -43,6 +43,10 @@ lint_commitlint() {
     fi
 }
 
+lint_jsonlint() {
+    find . -name "*.json" -exec jsonlint -q {} \+
+}
+
 lint_pydocstyle() {
     pydocstyle cms_reco
 }
@@ -57,6 +61,7 @@ python_tests() {
 
 all() {
     lint_commitlint
+    lint_jsonlint
     lint_pydocstyle
     lint_shellcheck
     python_tests
@@ -68,6 +73,7 @@ help() {
     echo "  --all              Perform all checks [default]"
     echo "  --help             Display this help message"
     echo "  --lint-commitlint  Check linting of commit messages"
+    echo "  --lint-jsonlint    Check linting of JSON files"
     echo "  --lint-pydocstyle  Check linting of Python docstrings"
     echo "  --lint-shellcheck  Check linting of shell scripts"
     echo "  --python-tests     Check Python test suite"
@@ -83,6 +89,7 @@ case $arg in
 --all) all ;;
 --help) help ;;
 --lint-commitlint) lint_commitlint "$@" ;;
+--lint-jsonlint) lint_jsonlint ;;
 --lint-pydocstyle) lint_pydocstyle ;;
 --lint-shellcheck) lint_shellcheck ;;
 --python-tests) python_tests ;;
