@@ -5,3 +5,5 @@ inputs:
 workflow:
   type: cwl
   file: workflow/workflow.cwl
+  files:
+    - workflow/step1.cwl
